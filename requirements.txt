@@ -1,0 +1,29 @@
+# Backend BCRA - dependencias
+# Instalar con: pip install -r requirements.txt
+
+fastapi==0.141.1
+uvicorn[standard]==0.52.4
+requests==2.33.1
+sqlalchemy==2.0.52
+
+# Auth: hash de contraseñas (bcrypt) y tokens de sesión (JWT)
+passlib[bcrypt]==1.7.4
+python-jose[cryptography]==3.5.0
+# passlib 1.7.4 no es compatible con bcrypt >= 4.1 (rompe con un error de
+# atributo faltante al detectar la version). Se fija bcrypt en una version
+# que si funciona con passlib. Si en el futuro actualizas passlib, podes
+# probar sacar este pin.
+bcrypt==4.0.1
+
+# Validar email en los modelos (EmailStr de pydantic)
+email-validator==2.3.0
+
+# Rate limiting (freno a fuerza bruta en /auth/login y /auth/registro,
+# y limite de uso en /situacion)
+slowapi==0.1.10
+
+# Requerido por FastAPI para leer formularios (OAuth2PasswordRequestForm en /auth/login)
+python-multipart==0.0.32
+
+# Generar el PDF de la carta de reclamo
+reportlab==4.4.10
