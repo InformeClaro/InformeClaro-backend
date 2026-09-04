@@ -268,6 +268,7 @@ def _consultar_bcra(cuit: str) -> dict:
     if resp.status_code == 404:
         return {"sin_deudas": True}
     if resp.status_code != 200:
+        print(f"[DEBUG] BCRA respondio {resp.status_code} para {url}: {resp.text[:300]}")
         raise HTTPException(status_code=502, detail="El BCRA devolvio un error inesperado")
 
     return resp.json()
