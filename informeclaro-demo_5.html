@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>InformeClaro — Entendé tu situación crediticia</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap');
+
+  :root{
+    --bg:#F3F6FB;
+    --card:#FFFFFF;
+    --ink:#16233A;
+    --ink-soft:#6B7686;
+    --line:rgba(22,35,58,0.09);
+
+    --blue:#2F5FDB;
+    --blue-dark:#1E44B0;
+    --blue-soft:#E8EEFC;
+
+    --green:#2F9E64;
+    --green-soft:#DFF3E3;
+
+    --amber:#B8752B;
+    --amber-soft:#FBE9CB;
+
+    --red:#C0392F;
+    --red-soft:#FBE4E1;
+
+    --purple:#6E56CF;
+    --purple-soft:#EDE9FB;
+  }
+
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    font-family:'Inter', system-ui, sans-serif;
+    color:var(--ink);
+    min-height:100vh;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:40px 20px 60px;
+  }
+  @media (prefers-reduced-motion: reduce){ *{animation-duration:.001ms !important; transition-duration:.001ms !important;} }
+
+  /* ---------- Marca (encabezado de la página, fuera del telefono) ---------- */
+  .brand{
+    display:flex; flex-direction:column; align-items:center;
+    margin-bottom:28px;
+  }
+  .brand-row{display:flex; align-items:center; gap:10px;}
+  .brand-mark{
+    width:38px;height:38px;border-radius:11px;
+    background:linear-gradient(135deg, var(--blue) 0%, var(--green) 100%);
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:19px;font-weight:800;
+  }
+  .brand-word{font-size:26px;font-weight:800;letter-spacing:-0.02em;}
+  .brand-word b{color:var(--blue);}
+  .brand-tag{font-size:13.5px;color:var(--ink-soft);margin-top:4px;}
+
+  /* ---------- Telefono ---------- */
+  .phone{
+    width:380px; max-width:92vw;
+    background:#0E1A2B;
+    border-radius:44px;
+    padding:12px;
+    box-shadow:0 40px 80px -30px rgba(14,26,43,.4), 0 2px 0 rgba(255,255,255,.4) inset;
+  }
+  .notch{position:relative;height:20px;}
+  .notch::before{content:'';position:absolute;top:0;left:50%;transform:translateX(-50%);width:100px;height:16px;background:#0E1A2B;border-radius:0 0 12px 12px;}
+  .screen{
+    background:var(--bg);
+    border-radius:32px;
+    min-height:600px;
+    display:flex;flex-direction:column;
+    overflow:hidden;
+  }
+  .content{
+    flex:1;
+    padding:20px 18px 8px;
+    overflow-y:auto;
+  }
+
+  /* ---------- Bottom nav ---------- */
+  .navbar{
+    display:flex;
+    border-top:1px solid var(--line);
+    background:#fff;
+    padding:10px 6px 14px;
+  }
+  .navbtn{
+    flex:1;
+    display:flex;flex-direction:column;align-items:center;gap:3px;
+    background:none;border:none;cursor:pointer;
+    color:var(--ink-soft);
+    font-family:'Inter',sans-serif;font-size:10.5px;font-weight:600;
+    padding:4px 2px;
+  }
+  .navbtn.active{color:var(--blue);}
+  .navbtn svg{width:20px;height:20px;}
+
+  /* ---------- Tipografia general ---------- */
+  h1,h2,h3{margin:0; font-weight:800; letter-spacing:-0.01em;}
+  .h-greet{font-size:19px;}
+  .h-screen{font-size:17px;}
+  .sub{font-size:12.5px; color:var(--ink-soft); margin-top:2px;}
+
+  /* ---------- Cards ---------- */
+  .card{
+    background:var(--card);
+    border-radius:16px;
+    padding:15px 16px;
+    border:1px solid var(--line);
+    margin-bottom:12px;
+  }
+  .card-row{display:flex; justify-content:space-between; align-items:center; gap:10px;}
+
+  /* Estado general */
+  .status-card{border-radius:16px; padding:16px; margin-bottom:14px;}
+  .status-card.amber{background:var(--amber-soft);}
+  .status-card.green{background:var(--green-soft);}
+  .status-card.red{background:var(--red-soft);}
+  .status-label{font-size:11.5px; color:var(--ink-soft); font-weight:600; margin-bottom:8px;}
+  .status-main{display:flex; align-items:center; justify-content:space-between;}
+  .status-title{display:flex; align-items:center; gap:8px; font-size:16px; font-weight:800;}
+  .status-title.amber{color:var(--amber);}
+  .status-title.green{color:var(--green);}
+  .status-title.red{color:var(--red);}
+  .status-desc{font-size:12.5px; color:var(--ink-soft); margin-top:8px;}
+
+  /* stats mini cards */
+  .stats-row{display:flex; gap:10px; margin-bottom:14px;}
+  .stat-card{flex:1; background:var(--card); border:1px solid var(--line); border-radius:14px; padding:12px 13px;}
+  .stat-num{font-size:20px; font-weight:800;}
+  .stat-label{font-size:11px; color:var(--ink-soft); margin-top:2px;}
+  .stat-link{font-size:11px; color:var(--blue); font-weight:600; margin-top:6px; display:inline-block; cursor:pointer;}
+
+  /* Acciones sugeridas */
+  .action-row{
+    display:flex; align-items:center; gap:12px;
+    background:var(--card); border:1px solid var(--line);
+    border-radius:14px; padding:13px 14px; margin-bottom:10px;
+    cursor:pointer;
+  }
+  .action-icon{
+    width:36px;height:36px;border-radius:10px;
+    background:var(--blue-soft); color:var(--blue);
+    display:flex;align-items:center;justify-content:center;flex:0 0 auto;
+  }
+  .action-title{font-size:13.5px; font-weight:700;}
+  .action-desc{font-size:11.5px; color:var(--ink-soft); margin-top:1px;}
+  .action-chev{margin-left:auto; color:var(--ink-soft);}
+
+  /* pills */
+  .pill{
+    display:inline-flex; align-items:center;
+    font-size:11px; font-weight:700; padding:4px 10px; border-radius:999px;
+  }
+  .pill.amber{background:var(--amber-soft); color:var(--amber);}
+  .pill.green{background:var(--green-soft); color:var(--green);}
+  .pill.red{background:var(--red-soft); color:var(--red);}
+
+  /* entidad card (registros) */
+  .entidad-card{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:13px 14px; margin-bottom:10px; cursor:pointer;}
+  .entidad-top{display:flex; align-items:center; gap:10px; margin-bottom:8px;}
+  .entidad-avatar{width:32px;height:32px;border-radius:9px;background:var(--blue-soft);color:var(--blue-dark);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:13px;flex:0 0 auto;}
+  .entidad-name{font-size:13.5px; font-weight:700; flex:1;}
+  .entidad-meta{font-size:11.5px; color:var(--ink-soft); margin-bottom:2px;}
+  .entidad-link{font-size:12px; color:var(--blue); font-weight:700; margin-top:6px;}
+
+  /* toggle (resumen/detalle, tabs internas) */
+  .toggle-row{display:flex; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:4px; margin-bottom:16px;}
+  .toggle-btn{flex:1; border:none; background:none; padding:9px 6px; border-radius:9px; font-family:'Inter',sans-serif; font-weight:700; font-size:12.5px; color:var(--ink-soft); cursor:pointer;}
+  .toggle-btn.active{background:var(--blue-soft); color:var(--blue-dark);}
+
+  /* buttons */
+  .btn-primary{
+    width:100%; border:none; background:var(--blue); color:#fff;
+    font-family:'Inter',sans-serif; font-weight:700; font-size:13.5px;
+    padding:13px 14px; border-radius:12px; cursor:pointer; margin-bottom:8px;
+  }
+  .btn-primary:hover{background:var(--blue-dark);}
+  .btn-primary:disabled{opacity:.5; cursor:default;}
+  .btn-secondary{
+    width:100%; border:1.5px solid var(--line); background:#fff; color:var(--ink);
+    font-family:'Inter',sans-serif; font-weight:700; font-size:13px;
+    padding:11px 14px; border-radius:12px; cursor:pointer; margin-bottom:8px;
+  }
+  .btn-text{border:none; background:none; color:var(--blue); font-weight:700; font-size:12.5px; cursor:pointer; padding:0;}
+
+  .field-label{font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:var(--ink-soft); display:block; margin-bottom:6px;}
+  input[type=text],input[type=password]{
+    width:100%; font-family:'Inter',sans-serif; font-size:14px;
+    padding:12px 13px; border-radius:11px; border:1.5px solid var(--line);
+    background:#fff; color:var(--ink); outline:none; margin-bottom:12px;
+  }
+  input:focus{border-color:var(--blue);}
+
+  .info-box{background:var(--blue-soft); border-radius:12px; padding:12px 13px; font-size:12px; color:var(--ink); line-height:1.5; margin-bottom:12px;}
+  .info-box b{color:var(--blue-dark);}
+  .error-box{background:var(--red-soft); border-radius:12px; padding:11px 13px; font-size:12px; color:var(--red); margin-bottom:12px;}
+  .disclaimer-strip{
+    display:flex; gap:8px; align-items:flex-start;
+    background:var(--blue-soft); border-radius:12px; padding:11px 12px;
+    font-size:10.5px; color:var(--ink-soft); line-height:1.45; margin-top:auto;
+  }
+
+  .checkline{display:flex; gap:8px; align-items:flex-start; font-size:12px; margin-bottom:12px; cursor:pointer;}
+  .checkline input{margin-top:2px;}
+
+  .loading-view{display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:16px;}
+  .spinner{width:30px;height:30px;border-radius:50%;border:3px solid var(--line);border-top-color:var(--blue);animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+
+  .empty-state{text-align:center; padding:30px 10px;}
+  .empty-state .big-icon{font-size:34px; margin-bottom:10px;}
+  .empty-state p{font-size:13px; color:var(--ink-soft); line-height:1.5;}
+
+  .collapsible{background:var(--card); border:1px solid var(--line); border-radius:14px; padding:13px 14px; margin-bottom:12px;}
+  .collapsible-h{font-size:13px; font-weight:700; margin-bottom:6px;}
+  .collapsible p{font-size:12px; color:var(--ink-soft); line-height:1.5; margin:0;}
+
+  /* trust strip (below phone) */
+  .trust-strip{max-width:380px; width:100%; display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:26px;}
+  .trust-item{text-align:center;}
+  .trust-ico{width:38px;height:38px;border-radius:11px;margin:0 auto 8px;display:flex;align-items:center;justify-content:center;font-size:16px;}
+  .trust-item p{font-size:10.5px;color:var(--ink-soft);line-height:1.4;margin:0;}
+  .trust-item b{display:block;font-size:11.5px;color:var(--ink);margin-bottom:2px;}
+
+  .footnote{margin-top:20px;font-size:11px;color:var(--ink-soft);text-align:center;max-width:340px;}
+
+  @media (max-width:480px){
+    body{padding:0; align-items:stretch;}
+    .brand{margin:18px 0 14px;}
+    .phone{
+      width:100%; max-width:none;
+      border-radius:0; padding:0;
+      box-shadow:none; background:transparent;
+    }
+    .notch{display:none;}
+    .screen{
+      border-radius:0;
+      min-height:calc(100vh - 96px); /* deja lugar a .brand arriba */
+    }
+    .trust-strip, .footnote{display:none;}
+    input[type=text],input[type=password]{font-size:16px;} /* evita el auto-zoom de iOS Safari */
+  }
+</style>
+</head>
+<body>
+
+  <div class="brand">
+    <div class="brand-row">
+      <div class="brand-mark">✓</div>
+      <div class="brand-word">Informe<b>Claro</b></div>
+    </div>
+    <div class="brand-tag">Entendé tu situación crediticia.</div>
+  </div>
+
+  <div class="phone">
+    <div class="notch"></div>
+    <div class="screen">
+      <div class="content" id="content"></div>
+      <div id="navwrap"></div>
+    </div>
+  </div>
+
+  <div class="trust-strip">
+    <div class="trust-item"><div class="trust-ico" style="background:var(--blue-soft);color:var(--blue);">🛡️</div><b>Confiable</b><p>Datos oficiales del BCRA.</p></div>
+    <div class="trust-item"><div class="trust-ico" style="background:var(--green-soft);color:var(--green);">🔒</div><b>Seguro</b><p>Tu sesión, protegida.</p></div>
+    <div class="trust-item"><div class="trust-ico" style="background:var(--purple-soft);color:var(--purple);">📄</div><b>Simple</b><p>Todo en criollo.</p></div>
+    <div class="trust-item"><div class="trust-ico" style="background:var(--blue-soft);color:var(--blue);">⚡</div><b>Rápido</b><p>En minutos, con acción.</p></div>
+  </div>
+
+  <div class="footnote">InformeClaro no brinda asesoramiento legal. La información es orientativa y no sustituye la consulta con un profesional. Las acciones sugeridas corresponden a derechos de acceso, rectificación o supresión de datos personales.</div>
+
+<script>
+(function(){
+  const content = document.getElementById('content');
+  const navwrap = document.getElementById('navwrap');
+
+  const state = {
+    apiBase: 'http://localhost:8000',
+    token: null,
+    userEmail: null,
+    cuit: null,
+    situacion: null,   // ultima respuesta de /situacion
+    ultimaConsulta: null,
+    tab: 'inicio',
+  };
+
+  async function apiFetch(path, options = {}) {
+    const url = state.apiBase.replace(/\/+$/, '') + path;
+    const headers = Object.assign({}, options.headers || {});
+    if (state.token) headers['Authorization'] = 'Bearer ' + state.token;
+    try {
+      const resp = await fetch(url, Object.assign({}, options, { headers }));
+      let data = null;
+      try { data = await resp.json(); } catch (e) {}
+      return { ok: resp.ok, status: resp.status, data };
+    } catch (err) {
+      return { ok: false, status: 0, data: null, networkError: true };
+    }
+  }
+
+  function iconHouse(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/></svg>`;}
+  function iconDoc(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h9l5 5v15H6z"/><path d="M14 2v6h6"/></svg>`;}
+  function iconBook(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h7a3 3 0 013 3v13a3 3 0 00-3-3H4z"/><path d="M20 4h-7a3 3 0 00-3 3v13a3 3 0 013-3h7z"/></svg>`;}
+  function iconUser(){return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>`;}
+
+  function renderNav(){
+    const tabs = [
+      {id:'inicio', label:'Inicio', icon:iconHouse()},
+      {id:'registros', label:'Registros', icon:iconDoc()},
+      {id:'reclamos', label:'Reclamos', icon:iconDoc()},
+      {id:'educacion', label:'Educación', icon:iconBook()},
+      {id:'perfil', label:'Perfil', icon:iconUser()},
+    ];
+    navwrap.innerHTML = `<div class="navbar">${tabs.map(t=>`
+      <button class="navbtn ${state.tab===t.id?'active':''}" data-tab="${t.id}">${t.icon}<span>${t.label}</span></button>
+    `).join('')}</div>`;
+    navwrap.querySelectorAll('[data-tab]').forEach(b=>{
+      b.addEventListener('click', ()=> goTab(b.getAttribute('data-tab')));
+    });
+  }
+
+  function goTab(tab){
+    state.tab = tab;
+    renderNav();
+    if (tab==='inicio') renderInicio();
+    else if (tab==='registros') renderRegistros();
+    else if (tab==='reclamos') renderReclamosTab();
+    else if (tab==='educacion') renderEducacion('derechos');
+    else if (tab==='perfil') renderPerfil();
+  }
+
+  // ================= Onboarding =================
+  function renderOnboarding(){
+    navwrap.innerHTML = '';
+    content.innerHTML = `
+      <h2 class="h-screen">Antes de arrancar</h2>
+      <p class="sub" style="margin-bottom:14px;">Para que sepas bien qué es esto y qué no</p>
+      <div class="card"><b>✅ Te ayudamos a entender</b><p class="sub">Qué informa el BCRA sobre vos, en simple.</p></div>
+      <div class="card"><b>✅ Te sugerimos acciones</b><p class="sub">Posibles pasos para revisar tu situación.</p></div>
+      <div class="card"><b>🚫 No somos un estudio jurídico</b><p class="sub">No reemplazamos asesoramiento profesional.</p></div>
+      <div class="card"><b>🚫 No enviamos nada por vos</b><p class="sub">Vos revisás y enviás cualquier reclamo.</p></div>
+      <button class="btn-primary" id="okBtn" style="margin-top:8px;">Entendido, continuar</button>
+    `;
+    document.getElementById('okBtn').addEventListener('click', ()=> goTab('inicio'));
+  }
+
+  // ================= INICIO =================
+  function renderInicio(){
+    if (!state.situacion) {
+      content.innerHTML = `
+        <h2 class="h-greet">Hola${state.userEmail ? ', ' + state.userEmail.split('@')[0] : ''}</h2>
+        <p class="sub" style="margin-bottom:16px;">Mi situación</p>
+        <div class="empty-state">
+          <div class="big-icon">📋</div>
+          <p>Todavía no consultaste tu situación en el BCRA.</p>
+        </div>
+        <label class="field-label">URL de tu backend</label>
+        <input type="text" id="apiBaseInput" value="${state.apiBase}">
+        <label class="field-label">CUIT / CUIL</label>
+        <input type="text" id="cuitInput" inputmode="numeric" maxlength="11" placeholder="20345678901" value="${state.cuit||''}">
+        <button class="btn-primary" id="consultarBtn">Consultar mi situación</button>
+        <div class="disclaimer-strip">🔒 No guardamos tu CUIT en el navegador. La consulta va directo a tu backend, que a su vez consulta al BCRA.</div>
+      `;
+      document.getElementById('apiBaseInput').addEventListener('change', function(){ state.apiBase = this.value.trim() || state.apiBase; });
+      document.getElementById('consultarBtn').addEventListener('click', ()=>{
+        state.apiBase = document.getElementById('apiBaseInput').value.trim() || state.apiBase;
+        const val = document.getElementById('cuitInput').value.trim();
+        if (val.length < 6) return;
+        consultarSituacion(val);
+      });
+      return;
+    }
+
+    const entidades = state.situacion.entidades || [];
+    const aRevisar = entidades.filter(e=>e.posible_situacion_a_revisar);
+    const peor = state.situacion.peor_situacion || 1;
+    let scClass, scLabel, scDesc, icon;
+    if (!state.situacion.tiene_deudas){ scClass='green'; scLabel='Situación normal'; scDesc='No encontramos información negativa vigente a tu nombre.'; icon='✅'; }
+    else if (aRevisar.length>0){ scClass='amber'; scLabel='Requiere revisión'; scDesc='Detectamos información que podría requerir verificación.'; icon='🛡️'; }
+    else if (peor>=2){ scClass='red'; scLabel='Mora vigente'; scDesc='Tenés información negativa activa e informada.'; icon='⚠️'; }
+    else { scClass='green'; scLabel='Situación normal'; scDesc='Tu situación en las entidades consultadas figura normal.'; icon='✅'; }
+
+    content.innerHTML = `
+      <h2 class="h-greet">Hola${state.userEmail ? ', ' + state.userEmail.split('@')[0] : ''}</h2>
+      <p class="sub" style="margin-bottom:14px;">Mi situación</p>
+
+      <div class="status-card ${scClass}">
+        <div class="status-label">Estado general</div>
+        <div class="status-main">
+          <div class="status-title ${scClass}"><span>${icon}</span>${scLabel}</div>
+          <span style="color:var(--ink-soft);">›</span>
+        </div>
+        <div class="status-desc">${scDesc}</div>
+      </div>
+
+      <div class="stats-row">
+        <div class="stat-card">
+          <div class="stat-num">${entidades.length}</div>
+          <div class="stat-label">Registros en BCRA</div>
+          <span class="stat-link" id="verRegistrosLink">Ver detalle</span>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num" style="font-size:14px;">${new Date().toLocaleDateString('es-AR')}</div>
+          <div class="stat-label">Última consulta</div>
+          <span class="stat-link" id="verHistorialLink">Volver a consultar</span>
+        </div>
+      </div>
+
+      <h3 style="font-size:13.5px; margin-bottom:10px;">Acciones sugeridas</h3>
+      <div class="action-row" id="accionEntender">
+        <div class="action-icon">${iconDoc()}</div>
+        <div><div class="action-title">Entendé tu situación</div><div class="action-desc">Te explicamos en simple qué significa cada estado.</div></div>
+        <div class="action-chev">›</div>
+      </div>
+      <div class="action-row" id="accionReclamo">
+        <div class="action-icon">${iconDoc()}</div>
+        <div><div class="action-title">Generar reclamo</div><div class="action-desc">Creamos el reclamo por vos para que lo presentes.</div></div>
+        <div class="action-chev">›</div>
+      </div>
+      <div class="action-row" id="accionReclamos">
+        <div class="action-icon">${iconDoc()}</div>
+        <div><div class="action-title">Ver mis reclamos</div><div class="action-desc">Hacé seguimiento de tus reclamos enviados.</div></div>
+        <div class="action-chev">›</div>
+      </div>
+    `;
+    document.getElementById('verRegistrosLink').addEventListener('click', ()=> goTab('registros'));
+    document.getElementById('verHistorialLink').addEventListener('click', ()=>{ state.situacion = null; renderInicio(); });
+    document.getElementById('accionEntender').addEventListener('click', ()=> goTab('educacion'));
+    document.getElementById('accionReclamos').addEventListener('click', ()=> goTab('reclamos'));
+    document.getElementById('accionReclamo').addEventListener('click', ()=>{
+      const entidad = aRevisar[0] || entidades[0];
+      if (!entidad) { goTab('registros'); return; }
+      if (!state.token) renderAuthGate(()=> renderClaimForm(entidad));
+      else renderClaimForm(entidad);
+    });
+  }
+
+  function consultarSituacion(cuit){
+    state.cuit = cuit;
+    navwrap.innerHTML = '';
+    content.innerHTML = `<div class="loading-view"><div class="spinner"></div><p class="sub">Consultando tu backend, que consulta al BCRA…</p></div>`;
+    apiFetch(`/situacion/${encodeURIComponent(cuit)}`).then(res=>{
+      renderNav();
+      if (res.networkError) { renderErrorInicio(`No pudimos conectar con ${state.apiBase}. Verificá que el backend esté corriendo.`); return; }
+      if (!res.ok) { renderErrorInicio((res.data&&res.data.detail)||`El backend respondió con un error (${res.status}).`); return; }
+      state.situacion = res.data;
+      state.ultimaConsulta = new Date();
+      renderInicio();
+    });
+  }
+
+  function renderErrorInicio(msg){
+    content.innerHTML = `
+      <h2 class="h-screen">No pudimos consultar</h2>
+      <div class="error-box">${msg}</div>
+      <button class="btn-primary" id="reintentarBtn">Reintentar</button>
+    `;
+    document.getElementById('reintentarBtn').addEventListener('click', ()=> renderInicio());
+  }
+
+  // ================= REGISTROS =================
+  function renderRegistros(vista){
+    vista = vista || 'resumen';
+    if (!state.situacion){
+      content.innerHTML = `<div class="empty-state"><div class="big-icon">📋</div><p>Consultá tu situación primero desde la pestaña Inicio.</p></div>
+        <button class="btn-primary" id="irInicioBtn">Ir a Inicio</button>`;
+      document.getElementById('irInicioBtn').addEventListener('click', ()=> goTab('inicio'));
+      return;
+    }
+    const entidades = state.situacion.entidades || [];
+    const cesiones = state.situacion.posibles_cesiones || [];
+
+    const cardsHtml = entidades.map((e,i)=>{
+      const inicial = (e.entidad||'?').trim().charAt(0);
+      let pill;
+      if (e.posible_situacion_a_revisar) pill = `<span class="pill amber">Para revisar</span>`;
+      else if (e.situacion >= 2) pill = `<span class="pill red">Mora vigente</span>`;
+      else pill = `<span class="pill green">Normal</span>`;
+      const detalleExtra = vista==='detalle' ? `
+        <div class="entidad-meta">Días desde inicio de mora: ${e.dias_desde_mora ?? '—'}${e.es_estimacion ? ' (estimado)' : ''}</div>
+      ` : '';
+      return `
+        <div class="entidad-card" data-idx="${i}">
+          <div class="entidad-top">
+            <div class="entidad-avatar">${inicial}</div>
+            <div class="entidad-name">${e.entidad}</div>
+            ${pill}
+          </div>
+          <div class="entidad-meta">Situación: ${e.situacion} - ${e.situacion_nombre}</div>
+          <div class="entidad-meta">Días de atraso: ${e.dias_atraso ?? 0}</div>
+          ${detalleExtra}
+          <div class="entidad-link">Ver detalle ›</div>
+        </div>
+      `;
+    }).join('');
+
+    const cesionesHtml = cesiones.map(c=>`
+      <div class="collapsible" style="background:var(--amber-soft); border-color:var(--amber);">
+        <div class="collapsible-h">⚠️ Posible cesión detectada</div>
+        <p>${c.entidad_anterior} → ${c.entidad_nueva} (desde ${c.periodo_corte}). ${c.motivo}</p>
+      </div>
+    `).join('');
+
+    content.innerHTML = `
+      <h2 class="h-screen">Registros en BCRA</h2>
+      <p class="sub" style="margin-bottom:14px;">Tenés ${entidades.length} registro${entidades.length===1?'':'s'} informado${entidades.length===1?'':'s'}. Estas entidades informan datos sobre tu situación crediticia.</p>
+      <div class="toggle-row">
+        <button class="toggle-btn ${vista==='resumen'?'active':''}" id="tabResumen">Resumen</button>
+        <button class="toggle-btn ${vista==='detalle'?'active':''}" id="tabDetalle">Detalle</button>
+      </div>
+      ${cesionesHtml}
+      ${cardsHtml || '<p class="sub">Sin entidades informadas.</p>'}
+      <div class="info-box">ℹ️ La información mostrada proviene de la Central de Deudores del BCRA y es actualizada por cada entidad informante.</div>
+    `;
+    document.getElementById('tabResumen').addEventListener('click', ()=> renderRegistros('resumen'));
+    document.getElementById('tabDetalle').addEventListener('click', ()=> renderRegistros('detalle'));
+    content.querySelectorAll('[data-idx]').forEach(el=>{
+      el.addEventListener('click', ()=> renderDetalleRegistro(entidades[parseInt(el.getAttribute('data-idx'),10)]));
+    });
+  }
+
+  function renderDetalleRegistro(entidad){
+    navwrap.innerHTML = '';
+    const pillClass = entidad.posible_situacion_a_revisar ? 'amber' : (entidad.situacion>=2 ? 'red' : 'green');
+    const pillLabel = entidad.posible_situacion_a_revisar ? 'Para revisar' : (entidad.situacion>=2 ? 'Mora vigente' : 'Normal');
+    content.innerHTML = `
+      <button class="btn-text" id="backBtn" style="margin-bottom:10px;">‹ Volver</button>
+      <div class="card-row" style="margin-bottom:10px;">
+        <h2 class="h-screen">${entidad.entidad}</h2>
+        <span class="pill ${pillClass}">${pillLabel}</span>
+      </div>
+      <div class="card">
+        <div class="entidad-meta">Situación</div>
+        <b>${entidad.situacion} - ${entidad.situacion_nombre}</b>
+      </div>
+      <div class="card">
+        <div class="entidad-meta">Días de atraso informados</div>
+        <b>${entidad.dias_atraso ?? 0}</b>
+      </div>
+      ${entidad.periodo_inicio_mora ? `<div class="card"><div class="entidad-meta">Inicio estimado de la mora</div><b>${entidad.periodo_inicio_mora}</b></div>` : ''}
+
+      <div class="collapsible">
+        <div class="collapsible-h">¿Qué significa esta situación?</div>
+        <p>${entidad.motivo_a_revisar || 'Esta entidad informa tu situación crediticia según los datos que remite al BCRA. Podés revisar el detalle histórico para más contexto.'}</p>
+      </div>
+
+      <div class="collapsible">
+        <div class="collapsible-h">¿Qué podés hacer?</div>
+        <p>${entidad.posible_situacion_a_revisar
+            ? 'Si considerás que esta información ya no debería figurar, podés iniciar un reclamo para que se revise.'
+            : 'Por ahora no detectamos algo puntual para reclamar sobre este registro.'}</p>
+      </div>
+
+      ${entidad.posible_situacion_a_revisar ? `
+        <button class="btn-primary" id="generarReclamoBtn">📄 Generar reclamo</button>
+        <button class="btn-secondary" id="descargarNotaBtn">⬇ Descargar modelo de nota</button>
+      ` : ''}
+    `;
+    document.getElementById('backBtn').addEventListener('click', ()=>{ renderNav(); renderRegistros(); });
+    const genBtn = document.getElementById('generarReclamoBtn');
+    if (genBtn) genBtn.addEventListener('click', ()=>{
+      if (!state.token) renderAuthGate(()=> renderClaimForm(entidad));
+      else renderClaimForm(entidad);
+    });
+    const descBtn = document.getElementById('descargarNotaBtn');
+    if (descBtn) descBtn.addEventListener('click', ()=>{
+      if (!state.token) renderAuthGate(()=> descargarNotaDirecto(entidad));
+      else descargarNotaDirecto(entidad);
+    });
+  }
+
+  async function descargarNotaDirecto(entidad){
+    const r = await apiFetch('/reclamo', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        cuit: state.situacion.cuit || state.cuit,
+        entidad: entidad.entidad,
+        periodo_deuda: state.situacion.periodo_consultado || '',
+        situacion: entidad.situacion,
+      }),
+    });
+    if (!r.ok) return;
+    const reclamoId = r.data.reclamo_id;
+    const pdfResp = await fetch(state.apiBase.replace(/\/+$/,'') + `/reclamos/${reclamoId}/pdf`, {
+      headers: { 'Authorization': 'Bearer ' + state.token },
+    });
+    if (!pdfResp.ok) return;
+    const blob = await pdfResp.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = `reclamo_${reclamoId}.pdf`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  // ================= EDUCACIÓN =================
+  function renderEducacion(sub){
+    sub = sub || 'derechos';
+    const motivos = ((state.situacion && state.situacion.entidades) || [])
+      .filter(e=>e.motivo_a_revisar)
+      .map(e=>`<li><b>${e.entidad}:</b> ${e.motivo_a_revisar}</li>`).join('');
+
+    content.innerHTML = `
+      <h2 class="h-screen">Educación</h2>
+      <p class="sub" style="margin-bottom:14px;">Para entender tu situación y tus derechos</p>
+      <div class="toggle-row">
+        <button class="toggle-btn ${sub==='derechos'?'active':''}" id="tabDerechos">Mis derechos</button>
+        <button class="toggle-btn ${sub==='analisis'?'active':''}" id="tabAnalisis">Análisis</button>
+      </div>
+      ${sub==='derechos' ? `
+        <div class="collapsible"><div class="collapsible-h">Acceso gratuito</div><p>Tenés derecho a acceder gratis a tu información en la Central de Deudores.</p></div>
+        <div class="collapsible"><div class="collapsible-h">Corrección</div><p>Podés pedir que se corrija información errónea, desactualizada o mal informada por una entidad.</p></div>
+        <div class="collapsible"><div class="collapsible-h">Plazos de permanencia</div><p>La información negativa no puede permanecer indefinidamente: existen plazos máximos.</p></div>
+        <div class="collapsible"><div class="collapsible-h">Reclamo directo</div><p>Podés reclamar ante la entidad que informó el dato, y también ante el BCRA.</p></div>
+        <div class="info-box">Esta sección es información general. No es asesoramiento legal ni reemplaza la consulta con un profesional.</div>
+      ` : `
+        <div class="collapsible"><div class="collapsible-h">Dato oficial vs. nuestro análisis</div><p>Lo que sigue es una lectura nuestra sobre lo que informó el BCRA, no un dato oficial en sí mismo.</p></div>
+        <ul style="font-size:12px; color:var(--ink-soft); padding-left:18px; line-height:1.6;">${motivos || '<li>No detectamos observaciones para revisar en tu última consulta.</li>'}</ul>
+        <div class="info-box">Cuando decimos "posible situación para revisar" es una hipótesis a verificar, no una conclusión jurídica.</div>
+      `}
+    `;
+    document.getElementById('tabDerechos').addEventListener('click', ()=> renderEducacion('derechos'));
+    document.getElementById('tabAnalisis').addEventListener('click', ()=> renderEducacion('analisis'));
+  }
+
+  // ================= RECLAMOS =================
+  function renderReclamosTab(){
+    if (!state.token){
+      content.innerHTML = `
+        <h2 class="h-screen">Mis reclamos</h2>
+        <div class="empty-state"><div class="big-icon">🔒</div><p>Iniciá sesión para ver y hacer seguimiento de tus reclamos.</p></div>
+        <button class="btn-primary" id="loginBtn">Iniciar sesión</button>
+      `;
+      document.getElementById('loginBtn').addEventListener('click', ()=> renderAuthGate(()=> renderReclamosTab()));
+      return;
+    }
+    content.innerHTML = `<div class="loading-view"><div class="spinner"></div><p class="sub">Cargando tus reclamos…</p></div>`;
+    apiFetch('/reclamos').then(r=>{
+      if (!r.ok){ content.innerHTML = `<div class="error-box">No pudimos cargar tus reclamos.</div>`; return; }
+      const lista = r.data || [];
+      content.innerHTML = `
+        <h2 class="h-screen">Mis reclamos</h2>
+        <p class="sub" style="margin-bottom:14px;">Seguimiento de tus reclamos generados</p>
+        ${lista.length ? lista.map(rec=>`
+          <div class="entidad-card" data-id="${rec.id}">
+            <div class="entidad-top"><div class="entidad-name">${rec.entidad}</div><span class="pill ${rec.estado==='resuelto'?'green':(rec.estado==='enviado'?'amber':'red')}">${rec.estado}</span></div>
+            <div class="entidad-meta">${rec.numero}</div>
+            <div class="entidad-link">Ver seguimiento ›</div>
+          </div>
+        `).join('') : `<div class="empty-state"><div class="big-icon">📄</div><p>Todavía no generaste ningún reclamo.</p></div>`}
+      `;
+      content.querySelectorAll('[data-id]').forEach(el=>{
+        el.addEventListener('click', ()=> renderClaimTracking(el.getAttribute('data-id')));
+      });
+    });
+  }
+
+  // ================= PERFIL =================
+  function renderPerfil(){
+    content.innerHTML = `
+      <h2 class="h-screen">Perfil</h2>
+      ${state.token ? `
+        <div class="card"><div class="entidad-meta">Sesión iniciada</div><b>${state.userEmail}</b></div>
+        <button class="btn-secondary" id="logoutBtn">Cerrar sesión</button>
+      ` : `
+        <div class="empty-state" style="padding:14px 0;"><p>No iniciaste sesión todavía.</p></div>
+        <button class="btn-primary" id="loginBtn">Iniciar sesión / Crear cuenta</button>
+      `}
+      <label class="field-label" style="margin-top:14px;">URL de tu backend</label>
+      <input type="text" id="apiBaseInputPerfil" value="${state.apiBase}">
+    `;
+    document.getElementById('apiBaseInputPerfil').addEventListener('change', function(){ state.apiBase = this.value.trim() || state.apiBase; });
+    const loginBtn = document.getElementById('loginBtn');
+    if (loginBtn) loginBtn.addEventListener('click', ()=> renderAuthGate(()=> renderPerfil()));
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) logoutBtn.addEventListener('click', ()=>{ state.token=null; state.userEmail=null; renderPerfil(); });
+  }
+
+  // ================= AUTH GATE =================
+  function renderAuthGate(onSuccess){
+    navwrap.innerHTML = '';
+    let modo = 'login';
+    function draw(){
+      content.innerHTML = `
+        <button class="btn-text" id="backBtnA" style="margin-bottom:10px;">‹ Volver</button>
+        <h2 class="h-screen">Necesitás una cuenta</h2>
+        <p class="sub" style="margin-bottom:14px;">Para generar y guardar el seguimiento de tu reclamo</p>
+        <div class="toggle-row">
+          <button class="toggle-btn ${modo==='login'?'active':''}" id="tabLogin">Iniciar sesión</button>
+          <button class="toggle-btn ${modo==='registro'?'active':''}" id="tabRegistro">Crear cuenta</button>
+        </div>
+        <label class="field-label">Email</label>
+        <input type="text" id="authEmail" placeholder="tu@email.com">
+        <label class="field-label">Contraseña</label>
+        <input type="password" id="authPass" placeholder="Mínimo 8 caracteres">
+        <div class="error-box" id="authError" style="display:none;"></div>
+        <button class="btn-primary" id="authSubmitBtn">${modo==='login'?'Ingresar':'Crear cuenta'}</button>
+      `;
+      document.getElementById('backBtnA').addEventListener('click', ()=>{ renderNav(); goTab(state.tab); });
+      document.getElementById('tabLogin').addEventListener('click', ()=>{ modo='login'; draw(); });
+      document.getElementById('tabRegistro').addEventListener('click', ()=>{ modo='registro'; draw(); });
+      document.getElementById('authSubmitBtn').addEventListener('click', submit);
+    }
+    async function submit(){
+      const email = document.getElementById('authEmail').value.trim();
+      const pass = document.getElementById('authPass').value;
+      const errBox = document.getElementById('authError');
+      errBox.style.display='none';
+      if (modo==='registro'){
+        const r = await apiFetch('/auth/registro', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({email, password:pass})});
+        if (!r.ok){ errBox.textContent=(r.data&&r.data.detail)||'No se pudo crear la cuenta.'; errBox.style.display='block'; return; }
+      }
+      const form = new URLSearchParams(); form.set('username', email); form.set('password', pass);
+      const r2 = await apiFetch('/auth/login', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body: form.toString()});
+      if (!r2.ok){ errBox.textContent=(r2.data&&r2.data.detail)||'Email o contraseña incorrectos.'; errBox.style.display='block'; return; }
+      state.token = r2.data.access_token;
+      state.userEmail = email;
+      renderNav();
+      onSuccess();
+    }
+    draw();
+  }
+
+  // ================= FLUJO DE RECLAMO =================
+  function renderClaimForm(entidad){
+    navwrap.innerHTML = '';
+    content.innerHTML = `
+      <button class="btn-text" id="backBtn4" style="margin-bottom:10px;">‹ Volver</button>
+      <h2 class="h-screen">Preparar mi reclamo</h2>
+      <p class="sub" style="margin-bottom:14px;">Sobre: ${entidad.entidad}</p>
+      <label class="field-label">Tu nombre completo</label>
+      <input type="text" id="nombreInput" placeholder="Como figura en tu DNI">
+      <label class="field-label">Tu domicilio (opcional)</label>
+      <input type="text" id="domicilioInput" placeholder="Calle, número, localidad">
+      <label class="checkline"><input type="checkbox" id="docCheck"><span>Tengo documentación de respaldo para adjuntar</span></label>
+      <div class="error-box" id="claimError" style="display:none;"></div>
+      <button class="btn-primary" id="generarBtn">Generar modelo de reclamo</button>
+    `;
+    document.getElementById('backBtn4').addEventListener('click', ()=>{ renderNav(); renderDetalleRegistro(entidad); });
+    document.getElementById('generarBtn').addEventListener('click', async ()=>{
+      const nombre = document.getElementById('nombreInput').value.trim();
+      const domicilio = document.getElementById('domicilioInput').value.trim();
+      const docAdjunta = document.getElementById('docCheck').checked;
+      const errBox = document.getElementById('claimError');
+      errBox.style.display='none';
+      const r = await apiFetch('/reclamo', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          cuit: state.situacion.cuit || state.cuit,
+          entidad: entidad.entidad,
+          periodo_deuda: state.situacion.periodo_consultado || '',
+          situacion: entidad.situacion,
+          nombre_completo: nombre || undefined,
+          domicilio: domicilio || undefined,
+          documentacion_adjunta: docAdjunta,
+        }),
+      });
+      if (!r.ok){ errBox.textContent=(r.data&&r.data.detail)||'No se pudo generar el reclamo.'; errBox.style.display='block'; return; }
+      renderClaimReview(entidad, r.data.texto_reclamo, r.data.reclamo_id);
+    });
+  }
+
+  function renderClaimReview(entidad, texto, reclamoId){
+    const asunto = `Solicitud de revisión — información informada por ${entidad.entidad}`;
+    content.innerHTML = `
+      <button class="btn-text" id="backBtn5" style="margin-bottom:10px;">‹ Volver a editar</button>
+      <h2 class="h-screen">Revisá tu reclamo</h2>
+      <div class="info-box">Esto es un modelo, no un dictamen legal. Nosotros no lo enviamos — lo hacés vos desde tu correo.</div>
+      <div class="card"><div class="entidad-meta">Destinatario</div><b>${entidad.entidad}</b></div>
+      <div class="card"><div class="entidad-meta">Asunto</div><b style="font-size:12.5px;">${asunto}</b></div>
+      <div class="card" style="white-space:pre-wrap; font-size:11.5px; line-height:1.5; color:var(--ink-soft);">${texto}</div>
+      <label class="checkline"><input type="checkbox" id="confirmCheck"><span>Revisé el texto y los datos, y son correctos.</span></label>
+      <button class="btn-primary" id="abrirCorreoBtn" disabled>Abrir en mi correo</button>
+    `;
+    document.getElementById('backBtn5').addEventListener('click', ()=> renderClaimForm(entidad));
+    const check = document.getElementById('confirmCheck');
+    const btn = document.getElementById('abrirCorreoBtn');
+    check.addEventListener('change', ()=>{ btn.disabled = !check.checked; });
+    btn.addEventListener('click', async ()=>{
+      if (btn.disabled) return;
+      window.open(`mailto:?subject=${encodeURIComponent(asunto)}&body=${encodeURIComponent(texto)}`, '_blank');
+      await apiFetch(`/reclamos/${reclamoId}`, {method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({estado:'enviado'})});
+      renderNav();
+      renderClaimTracking(reclamoId);
+    });
+  }
+
+  async function renderClaimTracking(reclamoId){
+    navwrap.innerHTML = '';
+    content.innerHTML = `<div class="loading-view"><div class="spinner"></div><p class="sub">Cargando seguimiento…</p></div>`;
+    const r = await apiFetch(`/reclamos/${reclamoId}`);
+    renderNav();
+    if (!r.ok){ content.innerHTML = `<div class="error-box">No pudimos cargar el seguimiento.</div>`; return; }
+    const rec = r.data;
+    const pasos = ['generado','enviado','resuelto'];
+    const idx = Math.max(0, pasos.indexOf(rec.estado));
+    content.innerHTML = `
+      <button class="btn-text" id="backBtn6" style="margin-bottom:10px;">‹ Volver</button>
+      <h2 class="h-screen">Seguimiento del reclamo</h2>
+      <p class="sub" style="margin-bottom:14px;">N° ${rec.numero}</p>
+      <div class="card"><div class="entidad-meta">Entidad</div><b>${rec.entidad}</b></div>
+      <div class="card"><div class="entidad-meta">Documentación</div><b>${rec.documentacion_adjunta?'Adjuntada':'No adjuntada'}</b></div>
+      <div class="card"><div class="entidad-meta">Plazo de respuesta</div><b>${rec.plazo_respuesta_dias} días hábiles</b></div>
+      <div class="collapsible">
+        <div class="collapsible-h">Estado</div>
+        <ul style="padding-left:18px; margin:0; font-size:12px; line-height:1.7;">
+          ${pasos.map((p,i)=>`<li style="${i<=idx?'font-weight:700;':'color:var(--ink-soft);'}">${{generado:'Preparado',enviado:'Enviado',resuelto:'Respuesta recibida'}[p]}${i===idx?' — estado actual':''}</li>`).join('')}
+        </ul>
+      </div>
+      <button class="btn-secondary" id="refrescarBtn">Actualizar estado</button>
+    `;
+    document.getElementById('backBtn6').addEventListener('click', ()=> goTab('reclamos'));
+    document.getElementById('refrescarBtn').addEventListener('click', ()=> renderClaimTracking(reclamoId));
+  }
+
+  renderOnboarding();
+})();
+</script>
+</body>
+</html>

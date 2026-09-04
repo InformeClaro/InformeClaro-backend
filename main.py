@@ -14,12 +14,15 @@ from typing import Optional
 from xml.sax.saxutils import escape as _xml_escape
 import os
 import re
+import secrets
 
 import requests
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.security import OAuth2PasswordRequestForm
+from google.auth.transport import requests as google_requests
+from google.oauth2 import id_token as google_id_token
 from pydantic import BaseModel, field_validator
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import getSampleStyleSheet
@@ -77,6 +80,15 @@ app.add_middleware(
 )
 
 BCRA_BASE_URL = "https://api.bcra.gob.ar/centraldedeudores/v1.0/Deudas"
+
+# ID de cliente de Google Sign-In (OAuth). Se configura como variable de entorno
+# GOOGLE_CLIENT_ID en Render. Es un valor publico (no es un secreto), pero igual
+# se maneja por variable de entorno para no tener que tocar el codigo si cambia.
+GOOGLE_CLIENT_ID = os.environ.get(
+    "GOOGLE_CLIENT_ID",
+    "147083048742-9l0gae2i8ialjgfsaf34u2e60dmi0eqo.apps.googleusercontent.com",
+)
+
 
 # Plazo maximo (en anios) que la ley permite mantener info negativa vigente
 # desde la fecha de mora (Ley 25.326, art. 26 inc. 4)
@@ -484,6 +496,58 @@ def login(request: Request, form: OAuth2PasswordRequestForm = Depends(), db: Ses
     usuario = db.query(Usuario).filter(Usuario.email == form.username).first()
     if not usuario or not verificar_password(form.password, usuario.password_hash):
         raise HTTPException(status_code=401, detail="Email o contrasena incorrectos")
+
+    usuario.fecha_ultimo_login = datetime.utcnow()
+    db.commit()
+
+    token = crear_token(usuario.id)
+    return {"access_token": token, "token_type": "bearer"}
+
+
+class GoogleLoginRequest(BaseModel):
+    credential: str  # el ID token (JWT) que devuelve el boton de Google en el frontend
+
+
+@app.post("/auth/google")
+@limiter.limit("10/minute")
+def login_google(request: Request, datos: GoogleLoginRequest, db: Session = Depends(get_db)):
+    """
+    Login/registro con Google. El frontend nos manda el "credential" (ID token)
+    que devuelve el boton de Google Identity Services; aca lo verificamos
+    directamente contra los servidores de Google (nunca confiamos en el token
+    sin validarlo) y de ahi sacamos el email ya verificado por Google.
+
+    Si es la primera vez que este email entra, se crea la cuenta sola
+    (sin necesidad de pasar por /auth/registro). Nunca se guarda contrasena
+    real para estas cuentas: se genera una al azar que no se usa para nada,
+    solo para no romper la columna password_hash (que es obligatoria).
+    """
+    try:
+        payload = google_id_token.verify_oauth2_token(
+            datos.credential, google_requests.Request(), GOOGLE_CLIENT_ID
+        )
+    except ValueError:
+        raise HTTPException(status_code=401, detail="Token de Google invalido o vencido")
+
+    email = payload.get("email")
+    if not email or not payload.get("email_verified"):
+        raise HTTPException(status_code=401, detail="No pudimos verificar tu email de Google")
+
+    usuario = db.query(Usuario).filter(Usuario.email == email).first()
+    if usuario is None:
+        usuario = Usuario(
+            email=email,
+            password_hash=hash_password(secrets.token_hex(32)),  # placeholder, no se usa para loguearse
+            email_verificado=True,
+            nombre=payload.get("given_name"),
+            apellido=payload.get("family_name"),
+        )
+        db.add(usuario)
+        db.commit()
+        db.refresh(usuario)
+    elif not usuario.email_verificado:
+        # si ya existia con password pero ahora confirma via Google, marcamos el email como verificado
+        usuario.email_verificado = True
 
     usuario.fecha_ultimo_login = datetime.utcnow()
     db.commit()

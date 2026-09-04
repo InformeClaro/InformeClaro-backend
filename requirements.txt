@@ -27,3 +27,6 @@ python-multipart==0.0.32
 
 # Generar el PDF de la carta de reclamo
 reportlab==4.4.10
+
+# Verificar el ID token que manda el boton de "Continuar con Google"
+google-auth==2.35.0
