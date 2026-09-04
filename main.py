@@ -132,6 +132,12 @@ class EntidadDeuda(BaseModel):
     posible_situacion_a_revisar: bool  # antes "caducada": ver nota en _calcular_caducidad
     es_estimacion: bool                 # antes "caducidad_estimada"
     motivo_a_revisar: Optional[str]     # antes "motivo_caducidad"
+    # Caso distinto a la caducidad: la entidad informa una situacion negativa
+    # (riesgo medio en adelante) pero sin dias de atraso que lo sustenten.
+    # Aca no hay nada que prescribio; lo que se puede reclamar es que
+    # aclaren/completen el dato, no que se de de baja.
+    posible_reclamo_aclaracion: bool
+    motivo_aclaracion: Optional[str]
 
 
 class PosibleCesion(BaseModel):
@@ -156,6 +162,7 @@ class ReclamoRequest(BaseModel):
     entidad: str
     periodo_deuda: str = ""
     situacion: int = 0
+    tipo_reclamo: str = "caducidad"  # "caducidad" (posible prescripcion) o "aclaracion" (dato incompleto)
     # Estos tres ahora son opcionales: si el usuario ya completo su perfil
     # (ver /auth/perfil), se usan esos datos y no hace falta reenviarlos.
     nombre_completo: Optional[str] = None
@@ -427,6 +434,19 @@ def obtener_situacion(
         peor_situacion = max(peor_situacion, situacion)
         info_sit = SITUACIONES.get(situacion, SITUACIONES[1])
         caducidad = _calcular_caducidad(e.get("entidad", ""), situacion, periodos_historicos)
+        dias_atraso = e.get("diasAtrasoPago", 0) or 0
+
+        # Situacion negativa (riesgo medio en adelante) informada sin dias de
+        # atraso que la respalden: es un dato incompleto, independientemente
+        # de si se pudo o no reconstruir el historico para la caducidad.
+        falta_info = situacion >= 3 and dias_atraso == 0
+        motivo_aclaracion = None
+        if falta_info:
+            motivo_aclaracion = (
+                f"Esta entidad te clasifica en situacion {situacion} ({info_sit['nombre']}), "
+                "pero no informa dias de atraso que respalden esa clasificacion. "
+                "Podes solicitar que aclaren y fundamenten el dato informado."
+            )
 
         entidades.append(EntidadDeuda(
             entidad=e.get("entidad", ""),
@@ -434,15 +454,19 @@ def obtener_situacion(
             situacion_nombre=info_sit["nombre"],
             riesgo=info_sit["riesgo"],
             monto_pesos=(e.get("monto", 0) or 0) * 1000,
-            dias_atraso=e.get("diasAtrasoPago", 0) or 0,
+            dias_atraso=dias_atraso,
             periodo_inicio_mora=caducidad["periodo_inicio"],
             dias_desde_mora=caducidad["dias_desde_mora"],
             posible_situacion_a_revisar=caducidad["posible_situacion_a_revisar"],
             es_estimacion=caducidad["es_estimacion"],
             motivo_a_revisar=caducidad["motivo"],
+            posible_reclamo_aclaracion=falta_info,
+            motivo_aclaracion=motivo_aclaracion,
         ))
 
-    aptas_reclamo = sum(1 for e in entidades if e.posible_situacion_a_revisar)
+    aptas_reclamo = sum(
+        1 for e in entidades if e.posible_situacion_a_revisar or e.posible_reclamo_aclaracion
+    )
     _guardar_consulta(db, usuario, cuit, peor_situacion=peor_situacion, aptas_reclamo=aptas_reclamo)
 
     posibles_cesiones = _detectar_posibles_cesiones(periodos_historicos)
@@ -601,6 +625,29 @@ def generar_reclamo(
     email = req.email or usuario.email
 
     fecha_hoy = date.today().strftime("%d/%m/%Y")
+
+    if req.tipo_reclamo == "aclaracion":
+        asunto_cuerpo = (
+            f"vengo por la presente a SOLICITAR que se me informe y fundamente la base de "
+            f"la situacion {req.situacion} que esa entidad informa a la Central de Deudores "
+            f"del Sistema Financiero del BCRA respecto de mi persona, dado que del informe "
+            f"consultado no surgen dias de atraso ni otro dato que sustente dicha clasificacion. "
+            f"En ejercicio del derecho de acceso y rectificacion previsto en el art. 16 de la "
+            f"Ley 25.326 de Proteccion de Datos Personales, solicito se aclare desde cuando y "
+            f"por que motivo se me clasifica en esa situacion y, de tratarse de un error u "
+            f"omision, se proceda a la correccion del dato informado."
+        )
+    else:
+        asunto_cuerpo = (
+            f"vengo por la presente a SOLICITAR que se revise la vigencia de los datos "
+            f"personales informados por esa entidad a la Central de Deudores del Sistema "
+            f"Financiero del BCRA y/o a bases de datos de informes comerciales, dado que, "
+            f"segun mi propio analisis del historico disponible, esta informacion podria haber "
+            f"superado el plazo maximo de permanencia previsto en el art. 26 inc. 4 de la ley "
+            f"citada. Agradecere confirmar la situacion y, de corresponder, proceder a la "
+            f"rectificacion y/o supresion del dato."
+        )
+
     texto = f"""
 Sr./Sra. Responsable de Datos Personales
 {req.entidad}
@@ -609,14 +656,7 @@ De mi consideracion:
 
 Quien suscribe, {nombre_completo}, CUIT/CUIL N° {req.cuit}, en ejercicio
 del derecho conferido por el art. 43 de la Constitucion Nacional y los
-arts. 16 y 26 de la Ley 25.326 de Proteccion de Datos Personales, vengo por
-la presente a SOLICITAR que se revise la vigencia de los datos personales
-informados por esa entidad a la Central de Deudores del Sistema Financiero
-del BCRA y/o a bases de datos de informes comerciales, dado que, segun mi
-propio analisis del historico disponible, esta informacion podria haber
-superado el plazo maximo de permanencia previsto en el art. 26 inc. 4 de
-la ley citada. Agradecere confirmar la situacion y, de corresponder,
-proceder a la rectificacion y/o supresion del dato.
+arts. 16 y 26 de la Ley 25.326 de Proteccion de Datos Personales, {asunto_cuerpo}
 
 Se recuerda que, conforme el art. 16 de la Ley 25.326, esa entidad cuenta
 con un plazo de CINCO (5) DIAS HABILES para responder a este pedido.
