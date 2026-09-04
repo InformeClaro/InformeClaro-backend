@@ -64,7 +64,6 @@ class Reclamo(Base):
     archivo_pdf_path = Column(String(500), nullable=True)   # ruta al PDF de la carta generada
     documentacion_adjunta = Column(Boolean, default=False)  # si el usuario adjunto su propio comprobante
     plazo_respuesta_dias = Column(Integer, default=5)       # dias habiles que menciona la carta (art. 16, Ley 25.326)
-    es_prueba = Column(Boolean, default=False, nullable=False, index=True)  # True = generado en modo prueba, no es un reclamo real
 
     fecha_deteccion = Column(DateTime, default=datetime.utcnow)  # cuándo detectamos que estaba caducada
     fecha_envio = Column(DateTime, nullable=True)
@@ -141,7 +140,6 @@ class ReclamoOut(BaseModel):
     estado: str
     documentacion_adjunta: bool
     plazo_respuesta_dias: int
-    es_prueba: bool
     fecha_deteccion: datetime
     fecha_envio: datetime | None
     fecha_resolucion: datetime | None

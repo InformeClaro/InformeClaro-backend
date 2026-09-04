@@ -150,7 +150,6 @@ class ReclamoRequest(BaseModel):
     domicilio: Optional[str] = None
     email: Optional[str] = None
     documentacion_adjunta: bool = False  # si el usuario dice haber adjuntado su comprobante
-    modo_prueba: bool = False  # True = esto es una prueba, no un reclamo real (no cuenta como dato real)
 
     @field_validator("cuit")
     @classmethod
@@ -537,12 +536,8 @@ def generar_reclamo(
     email = req.email or usuario.email
 
     fecha_hoy = date.today().strftime("%d/%m/%Y")
-    aviso_prueba = (
-        "*** ESTO ES UNA PRUEBA — NO ES UN RECLAMO REAL. NO ENVIAR. ***\n\n"
-        if req.modo_prueba else ""
-    )
     texto = f"""
-{aviso_prueba}Sr./Sra. Responsable de Datos Personales
+Sr./Sra. Responsable de Datos Personales
 {req.entidad}
 
 De mi consideracion:
@@ -585,7 +580,6 @@ antes de presentar este reclamo.
         estado="generado",
         documentacion_adjunta=req.documentacion_adjunta,
         plazo_respuesta_dias=5,  # art. 16, Ley 25.326
-        es_prueba=req.modo_prueba,
     )
     db.add(registro)
     db.commit()
@@ -647,30 +641,10 @@ def _reclamo_a_out(registro: ReclamoDB) -> ReclamoOut:
         estado=registro.estado,
         documentacion_adjunta=registro.documentacion_adjunta,
         plazo_respuesta_dias=registro.plazo_respuesta_dias,
-        es_prueba=registro.es_prueba,
         fecha_deteccion=registro.fecha_deteccion,
         fecha_envio=registro.fecha_envio,
         fecha_resolucion=registro.fecha_resolucion,
     )
-
-
-@app.delete("/reclamos/prueba")
-def borrar_reclamos_de_prueba(
-    usuario: Usuario = Depends(get_usuario_actual),
-    db: Session = Depends(get_db),
-):
-    """
-    Borra en bloque todos los reclamos marcados como es_prueba=True del usuario logueado.
-    Nunca toca reclamos reales (es_prueba=False), aunque sean del mismo usuario.
-    Pensado para limpiar despues de una tanda de pruebas.
-    """
-    borrados = (
-        db.query(ReclamoDB)
-        .filter(ReclamoDB.usuario_id == usuario.id, ReclamoDB.es_prueba == True)  # noqa: E712
-        .delete(synchronize_session=False)
-    )
-    db.commit()
-    return {"borrados": borrados}
 
 
 @app.get("/reclamos", response_model=list[ReclamoOut])
