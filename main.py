@@ -843,3 +843,25 @@ def actualizar_reclamo(
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/admin/reset-db")
+def reset_db(confirm: str = ""):
+    """
+    ENDPOINT TEMPORAL. Borra y recrea todas las tablas desde cero (esquema
+    actual del codigo), para el caso en que el archivo SQLite haya quedado
+    con columnas viejas y no se este reseteando solo entre deploys.
+
+    Borra TODO (usuarios, reclamos, consultas). Usar solo mientras no haya
+    datos reales que quieras conservar. Sacar esta ruta del codigo despues
+    de usarla (o antes de tener usuarios reales), porque no tiene ninguna
+    proteccion: cualquiera que sepa la URL podria vaciar la base.
+    """
+    if confirm != "si-borrar-todo":
+        raise HTTPException(
+            status_code=400,
+            detail="Agrega ?confirm=si-borrar-todo a la URL para confirmar que queres borrar TODA la base.",
+        )
+    Base.metadata.drop_all(bind=engine)
+    Base.metadata.create_all(bind=engine)
+    return {"status": "ok", "mensaje": "Base de datos reseteada con el esquema actual."}
