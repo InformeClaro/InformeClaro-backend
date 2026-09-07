@@ -592,10 +592,13 @@ def actualizar_perfil(
     db: Session = Depends(get_db),
 ):
     """Completa nombre, DNI, domicilio, etc. - se usan despues para prellenar la carta de reclamo."""
-    for campo, valor in datos.model_dump(exclude_unset=True).items():
+    cambios = datos.model_dump(exclude_unset=True)
+    print(f"[DEBUG] PUT /auth/perfil usuario_id={usuario.id} cambios={cambios}")
+    for campo, valor in cambios.items():
         setattr(usuario, campo, valor)
     db.commit()
     db.refresh(usuario)
+    print(f"[DEBUG] Perfil guardado: nombre={usuario.nombre!r} domicilio={usuario.domicilio!r}")
     return usuario
 
 
