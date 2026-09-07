@@ -418,7 +418,7 @@
     }
 
     const entidades = state.situacion.entidades || [];
-    const aRevisar = entidades.filter(e=>e.posible_situacion_a_revisar);
+    const aRevisar = entidades.filter(e=>e.posible_situacion_a_revisar || e.posible_reclamo_aclaracion);
     const peor = state.situacion.peor_situacion || 1;
     let scClass, scLabel, scDesc, icon;
     if (!state.situacion.tiene_deudas){ scClass='green'; scLabel='Situación normal'; scDesc='No encontramos información negativa vigente a tu nombre.'; icon='✅'; }
@@ -521,6 +521,7 @@
       const inicial = (e.entidad||'?').trim().charAt(0);
       let pill;
       if (e.posible_situacion_a_revisar) pill = `<span class="pill amber">Para revisar</span>`;
+      else if (e.posible_reclamo_aclaracion) pill = `<span class="pill amber">Dato incompleto</span>`;
       else if (e.situacion >= 2) pill = `<span class="pill red">Mora vigente</span>`;
       else pill = `<span class="pill green">Normal</span>`;
       const detalleExtra = vista==='detalle' ? `
@@ -572,8 +573,9 @@
 
   function renderDetalleRegistro(entidad){
     navwrap.innerHTML = '';
-    const pillClass = entidad.posible_situacion_a_revisar ? 'amber' : (entidad.situacion>=2 ? 'red' : 'green');
-    const pillLabel = entidad.posible_situacion_a_revisar ? 'Para revisar' : (entidad.situacion>=2 ? 'Mora vigente' : 'Normal');
+    const pillClass = entidad.posible_situacion_a_revisar ? 'amber' : (entidad.posible_reclamo_aclaracion ? 'amber' : (entidad.situacion>=2 ? 'red' : 'green'));
+    const pillLabel = entidad.posible_situacion_a_revisar ? 'Para revisar' : (entidad.posible_reclamo_aclaracion ? 'Dato incompleto' : (entidad.situacion>=2 ? 'Mora vigente' : 'Normal'));
+    const hayAlgoParaHacer = entidad.posible_situacion_a_revisar || entidad.posible_reclamo_aclaracion;
     content.innerHTML = `
       <button class="btn-text" id="backBtn" style="margin-bottom:10px;">‹ Volver</button>
       <div class="card-row" style="margin-bottom:10px;">
@@ -592,14 +594,18 @@
 
       <div class="collapsible">
         <div class="collapsible-h">¿Qué significa esta situación?</div>
-        <p>${entidad.motivo_a_revisar || 'Esta entidad informa tu situación crediticia según los datos que remite al BCRA. Podés revisar el detalle histórico para más contexto.'}</p>
+        <p>${entidad.motivo_a_revisar || entidad.motivo_aclaracion || 'Esta entidad informa tu situación crediticia según los datos que remite al BCRA. Podés revisar el detalle histórico para más contexto.'}</p>
       </div>
 
       <div class="collapsible">
         <div class="collapsible-h">¿Qué podés hacer?</div>
-        <p>${entidad.posible_situacion_a_revisar
+        <p>${
+          entidad.posible_situacion_a_revisar
             ? 'Si considerás que esta información ya no debería figurar, podés iniciar un reclamo para que se revise.'
-            : 'Por ahora no detectamos algo puntual para reclamar sobre este registro.'}</p>
+            : entidad.posible_reclamo_aclaracion
+              ? 'Esta entidad no informa días de atraso que respalden la situación asignada. Podés pedirle que aclare y fundamente el dato.'
+              : 'Por ahora no detectamos algo puntual para reclamar sobre este registro.'
+        }</p>
       </div>
 
       ${entidad.posible_situacion_a_revisar ? `
@@ -607,18 +613,27 @@
           <button class="btn-primary" id="generarReclamoBtn">📄 Generar reclamo</button>
           <button class="btn-secondary" id="descargarNotaBtn">⬇ Descargar modelo de nota</button>
         </div>
+      ` : entidad.posible_reclamo_aclaracion ? `
+        <div class="sticky-actions">
+          <button class="btn-primary" id="pedirAclaracionBtn">❓ Pedir aclaración</button>
+        </div>
       ` : ''}
     `;
     document.getElementById('backBtn').addEventListener('click', ()=>{ renderNav(); renderRegistros(); });
     const genBtn = document.getElementById('generarReclamoBtn');
     if (genBtn) genBtn.addEventListener('click', ()=>{
-      if (!state.token) renderAuthGate(()=> renderClaimForm(entidad));
-      else renderClaimForm(entidad);
+      if (!state.token) renderAuthGate(()=> renderClaimForm(entidad, 'caducidad'));
+      else renderClaimForm(entidad, 'caducidad');
     });
     const descBtn = document.getElementById('descargarNotaBtn');
     if (descBtn) descBtn.addEventListener('click', ()=>{
       if (!state.token) renderAuthGate(()=> descargarNotaDirecto(entidad));
       else descargarNotaDirecto(entidad);
+    });
+    const aclBtn = document.getElementById('pedirAclaracionBtn');
+    if (aclBtn) aclBtn.addEventListener('click', ()=>{
+      if (!state.token) renderAuthGate(()=> renderClaimForm(entidad, 'aclaracion'));
+      else renderClaimForm(entidad, 'aclaracion');
     });
   }
 
@@ -810,20 +825,35 @@
   }
 
   // ================= FLUJO DE RECLAMO =================
-  function renderClaimForm(entidad){
+  async function renderClaimForm(entidad, tipoReclamo){
+    tipoReclamo = tipoReclamo || 'caducidad';
     navwrap.innerHTML = '';
+    const titulo = tipoReclamo === 'aclaracion' ? 'Preparar mi pedido de aclaración' : 'Preparar mi reclamo';
+    content.innerHTML = `<div class="loading-view"><div class="spinner"></div><p class="sub">Cargando…</p></div>`;
+
+    // Si ya tiene cuenta, precargamos nombre y domicilio guardados en el perfil
+    // (si los cargó antes), para no pedirselos de nuevo cada vez.
+    let nombrePrevio = '', domicilioPrevio = '';
+    if (state.token){
+      const me = await apiFetch('/auth/me');
+      if (me.ok && me.data){
+        nombrePrevio = [me.data.nombre, me.data.apellido].filter(Boolean).join(' ').trim();
+        domicilioPrevio = me.data.domicilio || '';
+      }
+    }
+
     content.innerHTML = `
       <button class="btn-text" id="backBtn4" style="margin-bottom:10px;">‹ Volver</button>
-      <h2 class="h-screen">Preparar mi reclamo</h2>
+      <h2 class="h-screen">${titulo}</h2>
       <p class="sub" style="margin-bottom:14px;">Sobre: ${entidad.entidad}</p>
       <label class="field-label">Tu nombre completo</label>
-      <input type="text" id="nombreInput" placeholder="Como figura en tu DNI">
+      <input type="text" id="nombreInput" placeholder="Como figura en tu DNI" value="${nombrePrevio.replace(/"/g,'&quot;')}">
       <label class="field-label">Tu domicilio (opcional)</label>
-      <input type="text" id="domicilioInput" placeholder="Calle, número, localidad">
+      <input type="text" id="domicilioInput" placeholder="Calle, número, localidad" value="${domicilioPrevio.replace(/"/g,'&quot;')}">
       <label class="checkline"><input type="checkbox" id="docCheck"><span>Tengo documentación de respaldo para adjuntar</span></label>
       <div class="error-box" id="claimError" style="display:none;"></div>
       <div class="sticky-actions">
-        <button class="btn-primary" id="generarBtn">Generar modelo de reclamo</button>
+        <button class="btn-primary" id="generarBtn">Generar modelo${tipoReclamo === 'aclaracion' ? ' de nota' : ' de reclamo'}</button>
       </div>
     `;
     document.getElementById('backBtn4').addEventListener('click', ()=>{ renderNav(); renderDetalleRegistro(entidad); });
@@ -840,21 +870,31 @@
           entidad: entidad.entidad,
           periodo_deuda: state.situacion.periodo_consultado || '',
           situacion: entidad.situacion,
+          tipo_reclamo: tipoReclamo,
           nombre_completo: nombre || undefined,
           domicilio: domicilio || undefined,
           documentacion_adjunta: docAdjunta,
         }),
       });
       if (!r.ok){ errBox.textContent=(r.data&&r.data.detail)||'No se pudo generar el reclamo.'; errBox.style.display='block'; return; }
-      renderClaimReview(entidad, r.data.texto_reclamo, r.data.reclamo_id);
+      // Guardamos nombre y domicilio en el perfil para no volver a pedirlos la proxima vez.
+      if (nombre || domicilio){
+        apiFetch('/auth/perfil', {
+          method:'PUT', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({ nombre: nombre || undefined, domicilio: domicilio || undefined }),
+        }).catch(()=>{});
+      }
+      renderClaimReview(entidad, r.data.texto_reclamo, r.data.reclamo_id, tipoReclamo);
     });
   }
 
-  function renderClaimReview(entidad, texto, reclamoId){
-    const asunto = `Solicitud de revisión — información informada por ${entidad.entidad}`;
+  function renderClaimReview(entidad, texto, reclamoId, tipoReclamo){
+    const asunto = tipoReclamo === 'aclaracion'
+      ? `Solicitud de aclaración — información informada por ${entidad.entidad}`
+      : `Solicitud de revisión — información informada por ${entidad.entidad}`;
     content.innerHTML = `
       <button class="btn-text" id="backBtn5" style="margin-bottom:10px;">‹ Volver a editar</button>
-      <h2 class="h-screen">Revisá tu reclamo</h2>
+      <h2 class="h-screen">Revisá tu ${tipoReclamo === 'aclaracion' ? 'nota' : 'reclamo'}</h2>
       <div class="info-box">Esto es un modelo, no un dictamen legal. Nosotros no lo enviamos — lo hacés vos desde tu correo.</div>
       <div class="card"><div class="entidad-meta">Destinatario</div><b>${entidad.entidad}</b></div>
       <div class="card"><div class="entidad-meta">Asunto</div><b style="font-size:12.5px;">${asunto}</b></div>
