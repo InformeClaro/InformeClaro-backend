@@ -1,16 +1,26 @@
 """
 Conexión a la base de datos.
 
-Usa SQLite para desarrollo local (no requiere instalar nada extra).
-Para producción, alcanza con cambiar DATABASE_URL a Postgres/MySQL -
-el resto del código no se toca.
+Usa PostgreSQL en produccion (Render), vía la variable de entorno DATABASE_URL.
+Si esa variable no está configurada (por ejemplo corriendo en tu PC), usa
+SQLite local como antes, para no tener que instalar nada extra para probar.
 """
+import os
+
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-DATABASE_URL = "sqlite:///./bcra_app.db"
+DATABASE_URL = os.environ.get("DATABASE_URL", "sqlite:///./bcra_app.db")
 
-engine = create_engine(DATABASE_URL, connect_args={"check_same_thread": False})
+# Render entrega la URL con el prefijo "postgres://", pero SQLAlchemy 2.x
+# necesita "postgresql://" (mismo motor, solo cambia el nombre del prefijo).
+if DATABASE_URL.startswith("postgres://"):
+    DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql://", 1)
+
+# El argumento check_same_thread solo aplica a SQLite; con Postgres no hace falta.
+connect_args = {"check_same_thread": False} if DATABASE_URL.startswith("sqlite") else {}
+
+engine = create_engine(DATABASE_URL, connect_args=connect_args)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()

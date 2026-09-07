@@ -30,3 +30,6 @@ reportlab==4.4.10
 
 # Verificar el ID token que manda el boton de "Continuar con Google"
 google-auth==2.35.0
+
+# Driver de PostgreSQL (para la base de datos en produccion)
+psycopg2-binary==2.9.10
