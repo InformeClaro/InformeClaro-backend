@@ -277,21 +277,40 @@ def _calcular_caducidad(entidad_nombre: str, situacion_actual: int, periodos_his
 
 
 def _consultar_bcra(cuit: str) -> dict:
+    import time
+
     cuit = _normalizar_cuit(cuit)
     url = f"{BCRA_BASE_URL}/{cuit}"
-    try:
-        resp = requests.get(url, timeout=15)
-    except requests.exceptions.RequestException as e:
-        raise HTTPException(status_code=502, detail=f"No se pudo consultar el BCRA: {e}")
+
+    # Hasta 3 intentos: el BCRA a veces corta la conexion de forma puntual
+    resp = None
+    for intento in range(3):
+        try:
+            resp = requests.get(url, timeout=15)
+            break
+        except requests.exceptions.RequestException as e:
+            print(f"[DEBUG] Intento {intento + 1}/3 fallo al consultar BCRA: {e}")
+            if intento < 2:
+                time.sleep(2 * (intento + 1))
+
+    if resp is None:
+        raise HTTPException(
+            status_code=502,
+            detail="El BCRA no está respondiendo en este momento. Intentá de nuevo en unos minutos.",
+        )
 
     if resp.status_code == 404:
         return {"sin_deudas": True}
+    if resp.status_code == 503:
+        raise HTTPException(
+            status_code=502,
+            detail="El BCRA está en mantenimiento. Intentá de nuevo más tarde.",
+        )
     if resp.status_code != 200:
         print(f"[DEBUG] BCRA respondio {resp.status_code} para {url}: {resp.text[:300]}")
         raise HTTPException(status_code=502, detail="El BCRA devolvio un error inesperado")
 
     return resp.json()
-
 
 def _consultar_bcra_historico(cuit: str) -> list:
     """Trae el historico de periodos. Si falla, devuelve lista vacia (no rompe la consulta principal)."""
