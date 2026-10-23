@@ -502,7 +502,7 @@
       <div class="error-box">${msg}</div>
       <button class="btn-primary" id="reintentarBtn">Reintentar</button>
     `;
-    document.getElementById('reintentarBtn').addEventListener('click', ()=> renderInicio());
+    document.getElementById('reintentarBtn').addEventListener('click', ()=> state.cuit ? consultarSituacion(state.cuit) : renderInicio());
   }
 
   // ================= REGISTROS =================
